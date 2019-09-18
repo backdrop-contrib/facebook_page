@@ -1,0 +1,6 @@
+name = Facebook Page Plugin
+description = Integrates Facebook's Page Plugin as a configurable block.
+backdrop = 1.x
+type = module
+tags[] = Blocks
+

@@ -1,0 +1,327 @@
+<?php
+/**
+ * @file
+ * Integrates Facebook's Page Plugin as a configurable block.
+ */
+
+/**
+ * Implements hook_block_info().
+ */
+function facebook_page_block_info() {
+  return array(
+    'page_plugin' => array(
+      'info' => t('Facebook page plugin'),
+      'description' => t('An embedded Facebook page.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function facebook_page_block_configure($delta = '', $settings = array()) {
+  if ($delta == 'page_plugin') {
+    // Add default settings.
+    $settings += _facebook_page_default_settings();
+
+    $form['href'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Facebook Page URL'),
+      '#description' => t('The full URL of the Facebook Page to display.<br>e.g. https://www.facebook.com/backdropcms'),
+      '#default_value' => $settings['href'],
+      '#required' => TRUE,
+    );
+    $form['width'] = array(
+      '#type' => 'number',
+      '#title' => t('Width'),
+      '#description' => t('The width of the plugin; between 180 and 500 pixels.'),
+      '#default_value' => $settings['width'],
+      '#min' => 180,
+      '#max' => 500,
+      '#field_suffix' => t('px'),
+    );
+    $form['height'] = array(
+      '#type' => 'number',
+      '#title' => t('Height'),
+      '#description' => t('The height of the plugin; greater than 70 pixels.'),
+      '#default_value' => $settings['height'],
+      '#min' => 70,
+      '#max' => 9999,
+      '#field_suffix' => t('px'),
+    );
+    $form['tabs'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Tabs to display'),
+      '#description' => t('The Messages tab requires <a href="@toggle-messaging">messaging to be turned on for your Page</a>.', array('@toggle-messaging' => 'https://www.facebook.com/help/307375982614147/')),
+      '#options' => array(
+        'timeline' => t('Timeline'),
+        'events' => t('Events'),
+        'messages' => t('Messages'),
+      ),
+      '#default_value' => $settings['tabs'],
+    );
+    $form['hide_cover'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Hide cover photo in the header'),
+      '#default_value' => $settings['hide_cover'],
+    );
+    $form['show_facepile'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show profile photos when friends like this'),
+      '#default_value' => $settings['show_facepile'],
+    );
+    $form['hide_cta'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Hide the custom call to action button (if available)'),
+      '#default_value' => $settings['hide_cta'],
+    );
+    $form['small_header'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Use the small header instead'),
+      '#default_value' => $settings['small_header'],
+    );
+    $form['adapt_container_width'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Try to fit inside the container width'),
+      '#description' => t("When enabled, this option will try to prevent the plugin from being wider than its parent element, regardless of the 'Width' specified above."),
+      '#default_value' => $settings['adapt_container_width'],
+    );
+    $form['language'] = array(
+   		'#type' => 'select',
+   		'#title' => t('Language'),
+   		'#options' => _facebook_page_languages(),
+   		'#default_value' => $settings['language'],
+    );
+
+    return $form;
+  }
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function facebook_page_block_view($delta = '', $settings = array(), $contexts = array()) {
+  $block = array();
+
+  if ($delta == 'page_plugin') {
+    // Add default settings.
+    $settings += _facebook_page_default_settings();
+
+    // Add the JS SDK.
+    backdrop_add_js('https://connect.facebook.net/' . $settings['language'] . '/sdk.js#xfbml=1&version=v4.0', array(
+      'type' => 'external',
+      'defer' => TRUE,
+      'attributes' => array(
+        'async' => 'async',
+        'crossorigin' => 'anonymous',
+      ),
+    ));
+
+    // Create the block.
+    $block['content'] = array(
+      '#markup' => '
+        <div
+          class="fb-page"
+          data-href="' . $settings['href'] . '"
+          data-width="' . $settings['width'] . '"
+          data-height="' . $settings['height'] . '"
+          data-tabs="' . implode(',', $settings['tabs']) . '"
+          data-hide-cover="' . $settings['hide_cover'] . '"
+          data-show-facepile="' . $settings['show_facepile'] . '"
+          data-hide-cta="' . $settings['hide_cta'] . '"
+          data-small-header="' . $settings['small_header'] . '"
+          data-adapt-container-width="' . $settings['adapt_container_width'] . '"
+        >
+          <blockquote cite="' . $settings['href'] . '" class="fb-xfbml-parse-ignore">
+            <a href="' . $settings['href'] . '">Facebook</a>
+          </blockquote>
+        </div>
+      ',
+    );
+  }
+
+  return $block;
+}
+
+/**
+ * Get a list of default settings.
+ *
+ * @return array
+ *   An associative array of settings and their default values.
+ *
+ * @see https://developers.facebook.com/docs/plugins/page-plugin/#settings
+ */
+function _facebook_page_default_settings() {
+  return array(
+    'href' => '',
+    'width' => 340,
+    'height' => 500,
+    'tabs' => array(
+      'timeline' => 'timeline',
+      'events' => FALSE,
+      'messages' => FALSE,
+    ),
+    'hide_cover' => FALSE,
+    'show_facepile' => TRUE,
+    'hide_cta' => FALSE,
+    'small_header' => FALSE,
+    'adapt_container_width' => TRUE,
+    'language' => 'en_EN',
+  );
+}
+
+/**
+ * Get a list of supported languages.
+ *
+ * @return array
+ *   An associative array where the keys are codes in the form 'll_CC' (where
+ *   'll' is a two-letter language code, and 'CC' is a two-letter country code)
+ *   and the values are translated language names.
+ */
+function _facebook_page_languages() {
+  $languages = array(
+    'af_ZA' => t('Afrikaans'),
+    'ak_GH' => t('Akan'),
+    'am_ET' => t('Amharic'),
+    'ar_AR' => t('Arabic'),
+    'as_IN' => t('Assamese'),
+    'ay_BO' => t('Aymara'),
+    'az_AZ' => t('Azerbaijani'),
+    'be_BY' => t('Belarusian'),
+    'bg_BG' => t('Bulgarian'),
+    'bn_IN' => t('Bengali'),
+    'br_FR' => t('Breton'),
+    'bs_BA' => t('Bosnian'),
+    'ca_ES' => t('Catalan'),
+    'cb_IQ' => t('Sorani Kurdish'),
+    'ck_US' => t('Cherokee'),
+    'co_FR' => t('Corsican'),
+    'cs_CZ' => t('Czech'),
+    'cx_PH' => t('Cebuano'),
+    'cy_GB' => t('Welsh'),
+    'da_DK' => t('Danish'),
+    'de_DE' => t('German'),
+    'el_GR' => t('Greek'),
+    'en_EN' => t('English'),
+    'en_GB' => t('English (UK)'),
+    'en_IN' => t('English (India)'),
+    'en_PI' => t('English (Pirate)'),
+    'en_UD' => t('English (Upside Down)'),
+    'en_US' => t('English (US)'),
+    'eo_EO' => t('Esperanto'),
+    'es_CL' => t('Spanish (Chile)'),
+    'es_CO' => t('Spanish (Colombia)'),
+    'es_ES' => t('Spanish (Spain)'),
+    'es_LA' => t('Spanish'),
+    'es_MX' => t('Spanish (Mexico)'),
+    'es_VE' => t('Spanish (Venezuela)'),
+    'et_EE' => t('Estonian'),
+    'eu_ES' => t('Basque'),
+    'fa_IR' => t('Persian'),
+    'fb_LT' => t('Leet Speak'),
+    'ff_NG' => t('Fulah'),
+    'fi_FI' => t('Finnish'),
+    'fo_FO' => t('Faroese'),
+    'fr_CA' => t('French (Canada)'),
+    'fr_FR' => t('French (France)'),
+    'fy_NL' => t('Frisian'),
+    'ga_IE' => t('Irish'),
+    'gl_ES' => t('Galician'),
+    'gn_PY' => t('Guarani'),
+    'gu_IN' => t('Gujarati'),
+    'gx_GR' => t('Classical Greek'),
+    'ha_NG' => t('Hausa'),
+    'he_IL' => t('Hebrew'),
+    'hi_IN' => t('Hindi'),
+    'hr_HR' => t('Croatian'),
+    'hu_HU' => t('Hungarian'),
+    'hy_AM' => t('Armenian'),
+    'id_ID' => t('Indonesian'),
+    'ig_NG' => t('Igbo'),
+    'is_IS' => t('Icelandic'),
+    'it_IT' => t('Italian'),
+    'ja_JP' => t('Japanese'),
+    'ja_KS' => t('Japanese (Kansai)'),
+    'jv_ID' => t('Javanese'),
+    'ka_GE' => t('Georgian'),
+    'kk_KZ' => t('Kazakh'),
+    'km_KH' => t('Khmer'),
+    'kn_IN' => t('Kannada'),
+    'ko_KR' => t('Korean'),
+    'ku_TR' => t('Kurdish (Kurmanji)'),
+    'la_VA' => t('Latin'),
+    'lg_UG' => t('Ganda'),
+    'li_NL' => t('Limburgish'),
+    'ln_CD' => t('Lingala'),
+    'lo_LA' => t('Lao'),
+    'lt_LT' => t('Lithuanian'),
+    'lv_LV' => t('Latvian'),
+    'mg_MG' => t('Malagasy'),
+    'mk_MK' => t('Macedonian'),
+    'ml_IN' => t('Malayalam'),
+    'mn_MN' => t('Mongolian'),
+    'mr_IN' => t('Marathi'),
+    'ms_MY' => t('Malay'),
+    'mt_MT' => t('Maltese'),
+    'my_MM' => t('Burmese'),
+    'nb_NO' => t('Norwegian (bokmal)'),
+    'nd_ZW' => t('Ndebele'),
+    'ne_NP' => t('Nepali'),
+    'nl_BE' => t('Dutch (Belgium  )'),
+    'nl_NL' => t('Dutch'),
+    'nn_NO' => t('Norwegian (nynorsk)'),
+    'ny_MW' => t('Chewa'),
+    'or_IN' => t('Oriya'),
+    'pa_IN' => t('Punjabi'),
+    'pl_PL' => t('Polish'),
+    'ps_AF' => t('Pashto'),
+    'pt_BR' => t('Portuguese (Brazil)'),
+    'pt_PT' => t('Portuguese (Portugal)'),
+    'qu_PE' => t('Quechua'),
+    'rm_CH' => t('Romansh'),
+    'ro_RO' => t('Romanian'),
+    'ru_RU' => t('Russian'),
+    'rw_RW' => t('Kinyarwanda'),
+    'sa_IN' => t('Sanskrit'),
+    'sc_IT' => t('Sardinian'),
+    'se_NO' => t('Northern Sámi'),
+    'si_LK' => t('Sinhala'),
+    'sk_SK' => t('Slovak'),
+    'sl_SI' => t('Slovenian'),
+    'sn_ZW' => t('Shona'),
+    'so_SO' => t('Somali'),
+    'sq_AL' => t('Albanian'),
+    'sr_RS' => t('Serbian'),
+    'sv_SE' => t('Swedish'),
+    'sw_KE' => t('Swahili'),
+    'sy_SY' => t('Syriac'),
+    'sz_PL' => t('Silesian'),
+    'ta_IN' => t('Tamil'),
+    'te_IN' => t('Telugu'),
+    'tg_TJ' => t('Tajik'),
+    'th_TH' => t('Thai'),
+    'tk_TM' => t('Turkmen'),
+    'tl_PH' => t('Filipino'),
+    'tl_ST' => t('Klingon'),
+    'tr_TR' => t('Turkish'),
+    'tt_RU' => t('Tatar'),
+    'tz_MA' => t('Tamazight'),
+    'uk_UA' => t('Ukrainian'),
+    'ur_PK' => t('Urdu'),
+    'uz_UZ' => t('Uzbek'),
+    'vi_VN' => t('Vietnamese'),
+    'wo_SN' => t('Wolof'),
+    'xh_ZA' => t('Xhosa'),
+    'yi_DE' => t('Yiddish'),
+    'yo_NG' => t('Yoruba'),
+    'zh_CN' => t('Simplified Chinese (China)'),
+    'zh_HK' => t('Traditional Chinese (Hong Kong)'),
+    'zh_TW' => t('Traditional Chinese (Taiwan)'),
+    'zu_ZA' => t('Zulu'),
+    'zz_TR' => t('Zazaki'),
+  );
+
+  natcasesort($languages);
+  return $languages;
+}
+

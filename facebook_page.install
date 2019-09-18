@@ -1,0 +1,28 @@
+<?php
+/**
+ * @file
+ * Install, update, and uninstall functions for the Facebook Page Plugin module.
+ */
+
+/**
+ * Remove Drupal variables.
+ *
+ * TODO: Work out if it's possible to convert these to block settings...
+ */
+// function facebook_page_update_1000() {
+//   update_variable_del('fb_likebox_url');
+//   update_variable_del('fb_likebox_app_id');
+//   update_variable_del('fb_likebox_stream');
+//   update_variable_del('fb_likebox_events');
+//   update_variable_del('fb_likebox_messages');
+//   update_variable_del('fb_likebox_hide_header');
+//   update_variable_del('fb_likebox_show_faces');
+//   update_variable_del('fb_likebox_hide_cta');
+//   update_variable_del('fb_likebox_small_header');
+//   update_variable_del('fb_likebox_adapt_container_width');
+//   update_variable_del('fb_likebox_title');
+//   update_variable_del('fb_likebox_width');
+//   update_variable_del('fb_likebox_height');
+//   update_variable_del('fb_likebox_language');
+// }
+
